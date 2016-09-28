@@ -1,16 +1,18 @@
 package mgo
 
 import (
-	"os"
+	"net"
 	"sync"
 	"time"
 
+	"github.com/EiBlog/utils/logd"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 var (
-	globalMS *mgo.Session // mongodb session
+	// mongodb session
+	globalMS *mgo.Session
 	mu       sync.RWMutex
 )
 
@@ -19,10 +21,15 @@ const (
 )
 
 func init() {
-	Debug("mongo Dial " + os.Getenv("MGO"))
-	sess, err := mgo.Dial(os.Getenv("MGO"))
+	ips, err := net.LookupIP("mongodb")
 	if err != nil {
-		panic(err)
+		logd.Fatal(err)
+	}
+	logd.Debug(ips)
+
+	sess, err := mgo.Dial("mongodb:27017")
+	if err != nil {
+		logd.Error(err)
 	}
 	sess.SetMode(mgo.Strong, true)
 	sess.SetSocketTimeout(DEFAULY_MGO_TIMEOUT * time.Second)
@@ -47,7 +54,7 @@ func KeyIsExsit(db, collection, key, value string) bool {
 		return true
 	}
 	if err != nil { // 查找出错, 为了以防万一还是返回存在
-		Error(err)
+		logd.Error(err)
 		return true
 	}
 	return false
@@ -58,7 +65,7 @@ func IsEmpty(db, collection string) bool {
 	defer ms.Close()
 	count, err := c.Count()
 	if err != nil {
-		Error(err)
+		logd.Error(err)
 	}
 	return count == 0
 }
@@ -100,6 +107,14 @@ func Update(db, collection string, selector, update interface{}) error {
 	ms, c := Connect(db, collection)
 	defer ms.Close()
 
+	err := c.Update(selector, update)
+	return err
+}
+
+func Upsert(db, collection string, selector, update interface{}) error {
+	ms, c := Connect(db, collection)
+	defer ms.Close()
+
 	_, err := c.Upsert(selector, update)
 	return err
 }
@@ -129,7 +144,7 @@ func NextVal(db, countername string) int32 {
 	next := &Counter{}
 	info, err := c.Find(bson.M{"name": countername}).Apply(change, &next)
 	if err != nil {
-		Error(info, err)
+		logd.Error(info, err)
 		return -1
 	}
 
@@ -140,12 +155,12 @@ func NextVal(db, countername string) int32 {
 func DeepCopy(val interface{}, newVal interface{}) {
 	data, err := bson.Marshal(val)
 	if err != nil {
-		Error("bson.Marshal: ", err)
+		logd.Error("bson.Marshal: ", err)
 		return
 	}
 
 	if err := bson.Unmarshal(data, newVal); err != nil {
-		Error("bson.Unmarshal: ", err)
+		logd.Error("bson.Unmarshal: ", err)
 		return
 	}
 }
