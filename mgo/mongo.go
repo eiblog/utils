@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EiBlog/utils/logd"
+	"github.com/eiblog/utils/logd"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
