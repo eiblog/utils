@@ -66,26 +66,24 @@ func (l *Logger) receive() {
 	today := time.Now()
 	var file *os.File
 	var err error
-	for {
-		str := <-l.in
+	for str := range l.in {
 		if l.dir != "" {
 			if file == nil || today.Day() != time.Now().Day() {
 				today = time.Now()
-				file, err = os.OpenFile(fmt.Sprintf("%s/%s_%s.log", l.dir, l.obj, today.Format("2006-01-02")), os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+				file, err = os.OpenFile(fmt.Sprintf("%s/%s_%s.log", l.dir, l.obj, today.Format("2006-01-02")), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 				if err != nil {
 					panic(err)
 				}
 			}
 			file.WriteString(str)
 		}
-		l.out.Write([]byte(str))
+		if l.out != nil {
+			l.out.Write([]byte(str))
+		}
 	}
 }
 
 func (l *Logger) Output(lvl int, calldepth int, content string) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	now := time.Now()
 	_, file, line, ok := runtime.Caller(calldepth)
 	if !ok {
@@ -111,6 +109,9 @@ func (l *Logger) Output(lvl int, calldepth int, content string) error {
 	if l.isAsync {
 		l.in <- s
 	} else {
+		l.mu.Lock()
+		defer l.mu.Unlock()
+
 		l.out.Write([]byte(s))
 	}
 	return nil

@@ -31,7 +31,7 @@ func sendMail(subject, body string, to []string) error {
 		return err
 	}
 
-	contentType := "Content-Type: text/plain;charset=UTF-8"
+	contentType := "Content-Type:text/plain;charset=UTF-8"
 	msgStr := fmt.Sprint(
 		"To:", strings.Join(to, ";"),
 		"\r\nFrom:", from,
