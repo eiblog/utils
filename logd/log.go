@@ -298,16 +298,14 @@ func Errorf(format string, v ...interface{}) {
 	if Lerror < Std.level {
 		return
 	}
-	body := fmt.Sprintf(format, v...)
-	Std.Output(Lerror, 2, body+"\n"+CallerStack())
+	Std.Output(Lerror, 2, fmt.Sprintf(format, v...))
 }
 
 func Error(v ...interface{}) {
 	if Lerror < Std.level {
 		return
 	}
-	body := fmt.Sprintf(smartFormat(v...), v...)
-	Std.Output(Lerror, 2, body+"\n"+CallerStack())
+	Std.Output(Lerror, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 func Stack(v ...interface{}) {
