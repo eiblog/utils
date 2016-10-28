@@ -13,7 +13,7 @@ var (
 	smtpHost = "smtp.qq.com"
 )
 
-func sendMail(subject, body []byte, to []string) error {
+func sendMail(subject string, body []byte, to []string) error {
 	auth := smtp.PlainAuth("", from, pass, smtpHost)
 
 	conn, err := tls.Dial("tcp", smtpHost+":465", nil)

@@ -107,7 +107,7 @@ func (l *Logger) Output(lvl int, calldepth int, content string) error {
 	buf = append(buf, content...)
 
 	if len(l.emails) > 0 && lvl >= Lwarn {
-		// go sendMail(l.obj, buf, l.emails)
+		go sendMail(l.obj, buf, l.emails)
 	}
 	if l.flag&LAsync != 0 {
 		l.in <- buf
