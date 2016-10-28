@@ -11,20 +11,22 @@ import (
 )
 
 const (
-	LAsync        = 1 << iota // 异步输出日志
-	Ldebug                    // 日志的几个等级
+	Ldebug        = 1 << iota //
 	Linfo                     //
 	Lwarn                     //
 	Lerror                    //
 	Lfatal                    //
+	LAsync                    // 异步输出日志
 	Ldate                     // like 2006/01/02
 	Ltime                     // like 15:04:05
 	Lmicroseconds             // like 15:04:05.123123
 	Llongfile                 // like /a/b/c/d.go:23
 	Lshortfile                // like d.go:23
-	LUTC
+	LUTC                      // 时间utc输出
+
+	Lall = Ldebug | Linfo | Lwarn | Lerror | Lfatal
 	// 2006/01/02 15:04:05.123123, /a/b/c/d.go:23
-	LstdFlags = Ldate | Lmicroseconds | Lshortfile
+	LstdFlags = Ldate | Lmicroseconds | Lshortfile | Lall
 )
 
 var levelMaps = map[int]string{
@@ -38,7 +40,6 @@ var levelMaps = map[int]string{
 type Logger struct {
 	mu     sync.Mutex
 	obj    string      // 打印日志对象
-	level  int         // 日志等级
 	out    io.Writer   // 输出
 	in     chan []byte // channel
 	dir    string      // 输出目录
@@ -187,62 +188,54 @@ func (l *Logger) Print(v ...interface{}) {
 
 // debug
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	if Ldebug < l.level {
-		return
+	if Ldebug&l.flag != 0 {
+		l.Output(Ldebug, 2, fmt.Sprintf(format, v...))
 	}
-	l.Output(Ldebug, 2, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Debug(v ...interface{}) {
-	if Ldebug < l.level {
-		return
+	if Ldebug&l.flag != 0 {
+		l.Output(Ldebug, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	l.Output(Ldebug, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 // info
 func (l *Logger) Infof(format string, v ...interface{}) {
-	if Linfo < l.level {
-		return
+	if Linfo&l.flag != 0 {
+		l.Output(Linfo, 2, fmt.Sprintf(format, v...))
 	}
-	l.Output(Linfo, 2, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Info(v ...interface{}) {
-	if Linfo < l.level {
-		return
+	if Linfo&l.flag != 0 {
+		l.Output(Linfo, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	l.Output(Linfo, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 // warn
 func (l *Logger) Warnf(format string, v ...interface{}) {
-	if Lwarn < l.level {
-		return
+	if Lwarn&l.flag != 0 {
+		l.Output(Lwarn, 2, fmt.Sprintf(format, v...))
 	}
-	l.Output(Lwarn, 2, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Warn(v ...interface{}) {
-	if Lwarn < l.level {
-		return
+	if Lwarn&l.flag != 0 {
+		l.Output(Lwarn, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	l.Output(Lwarn, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 // error
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	if Lerror < l.level {
-		return
+	if Lerror&l.flag != 0 {
+		l.Output(Lerror, 2, fmt.Sprintf(format, v...)+CallerStack())
 	}
-	l.Output(Lerror, 2, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Error(v ...interface{}) {
-	if Lerror < l.level {
-		return
+	if Lerror&l.flag != 0 {
+		l.Output(Lerror, 2, fmt.Sprintf(smartFormat(v...), v...)+CallerStack())
 	}
-	l.Output(Lerror, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 // fatal
@@ -281,7 +274,15 @@ func (l *Logger) SetOutput(out io.Writer) {
 func (l *Logger) SetLevel(lvl int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.level = lvl
+	var i uint
+	for i = 0; i < uint(len(levelMaps)); i++ {
+		if lvl&1 != 0 {
+			break
+		}
+		lvl >>= 1
+	}
+	l.flag = (l.flag >> i) | (Lall >> i)
+	l.flag <<= i
 }
 
 func (l *Logger) SetEmail(v string) {
@@ -302,63 +303,51 @@ func Print(v ...interface{}) {
 }
 
 func Debugf(format string, v ...interface{}) {
-	if Ldebug < Std.level {
-		return
+	if Ldebug&Std.flag != 0 {
+		Std.Output(Ldebug, 2, fmt.Sprintf(format, v...))
 	}
-	Std.Output(Ldebug, 2, fmt.Sprintf(format, v...))
 }
 
 func Debug(v ...interface{}) {
-	if Ldebug < Std.level {
-		return
+	if Ldebug&Std.flag != 0 {
+		Std.Output(Ldebug, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	Std.Output(Ldebug, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 func Infof(format string, v ...interface{}) {
-	if Linfo < Std.level {
-		return
+	if Linfo&Std.flag != 0 {
+		Std.Output(Linfo, 2, fmt.Sprintf(format, v...))
 	}
-	Std.Output(Linfo, 2, fmt.Sprintf(format, v...))
 }
 
 func Info(v ...interface{}) {
-	if Linfo < Std.level {
-		return
+	if Linfo&Std.flag != 0 {
+		Std.Output(Linfo, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	Std.Output(Linfo, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 func Warnf(format string, v ...interface{}) {
-	if Lwarn < Std.level {
-		return
+	if Lwarn&Std.flag != 0 {
+		Std.Output(Lwarn, 2, fmt.Sprintf(format, v...))
 	}
-	Std.Output(Lwarn, 2, fmt.Sprintf(format, v...))
 }
 
 func Warn(v ...interface{}) {
-	if Lwarn < Std.level {
-		return
+	if Lwarn&Std.flag != 0 {
+		Std.Output(Lwarn, 2, fmt.Sprintf(smartFormat(v...), v...))
 	}
-	Std.Output(Lwarn, 2, fmt.Sprintf(smartFormat(v...), v...))
 }
 
 func Errorf(format string, v ...interface{}) {
-	if Lerror < Std.level {
-		return
+	if Lerror&Std.flag != 0 {
+		Std.Output(Lerror, 2, fmt.Sprintf(format, v...)+"\n"+CallerStack())
 	}
-	Std.Output(Lerror, 2, fmt.Sprintf(format, v...))
 }
 
 func Error(v ...interface{}) {
-	if Lerror < Std.level {
-		return
+	if Lerror&Std.flag != 0 {
+		Std.Output(Lerror, 2, fmt.Sprintf(smartFormat(v...), v...)+CallerStack())
 	}
-	Std.Output(Lerror, 2, fmt.Sprintf(smartFormat(v...), v...))
-}
-
-func Stack(v ...interface{}) {
-	Std.Output(Lerror, 2, fmt.Sprint(v...)+"\n"+CallerStack())
 }
 
 func Fatalf(format string, v ...interface{}) {
@@ -405,7 +394,7 @@ func SetObj(obj string) {
 func smartFormat(v ...interface{}) string {
 	format := ""
 	for i := 0; i < len(v); i++ {
-		format += " %v"
+		format += "%v"
 	}
 	format += "\n"
 	return format
@@ -443,15 +432,15 @@ func getColorLevel(level string) string {
 	level = strings.ToUpper(level)
 	switch level {
 	case "DEBUG":
-		return fmt.Sprintf("[\033[%dm%6s\033[0m]", Green, level)
+		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Green, level)
 	case "INFO":
-		return fmt.Sprintf("[\033[%dm%6s\033[0m]", Blue, level)
+		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Blue, level)
 	case "WARN":
-		return fmt.Sprintf("[\033[%dm%6s\033[0m]", Magenta, level)
+		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Magenta, level)
 	case "ERROR":
-		return fmt.Sprintf("[\033[%dm%6s\033[0m]", Yellow, level)
+		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Yellow, level)
 	case "FATAL":
-		return fmt.Sprintf("[\033[%dm%6s\033[0m]", Red, level)
+		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Red, level)
 	default:
 		return level
 	}
