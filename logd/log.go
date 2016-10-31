@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -23,6 +25,8 @@ const (
 	Llongfile                 // like /a/b/c/d.go:23
 	Lshortfile                // like d.go:23
 	LUTC                      // 时间utc输出
+	Ldaily                    //
+	Lhourly                   //
 
 	Lall = Ldebug | Linfo | Lwarn | Lerror | Lfatal
 	// 2006/01/02 15:04:05.123123, /a/b/c/d.go:23
@@ -85,6 +89,9 @@ func (l *Logger) receive() {
 				panic(err)
 			}
 			l.mu.Unlock()
+			if l.flag|(Ldaily|Lhourly) != 0 {
+				go l.rotate(today)
+			}
 		}
 		if file != nil {
 			file.Write(data)
@@ -93,6 +100,30 @@ func (l *Logger) receive() {
 			l.out.Write(data)
 		}
 	}
+}
+
+// 压缩
+func (l *Logger) rotate(t time.Time) {
+	filepath.Walk(l.dir, func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if int(t.Sub(f.ModTime()).Hours()) > 24 {
+			if strings.HasSuffix(f.Name(), ".log") {
+				cmd := exec.Command("gzip", path)
+				err = cmd.Run()
+				if err != nil {
+					return err
+				}
+			}
+		}
+		if int(t.Sub(f.ModTime()).Hours()) > 24*30 {
+			if err := os.Remove(path); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // log format: date, time(hour:minute:second:microsecond), level, module, shortfile:line, <content>
