@@ -26,7 +26,6 @@ const (
 	Lshortfile                // like d.go:23
 	LUTC                      // 时间utc输出
 	Ldaily                    //
-	Lhourly                   //
 
 	Lall = Ldebug | Linfo | Lwarn | Lerror | Lfatal
 	// 2006/01/02 15:04:05.123123, /a/b/c/d.go:23
@@ -89,7 +88,7 @@ func (l *Logger) receive() {
 				panic(err)
 			}
 			l.mu.Unlock()
-			if l.flag|(Ldaily|Lhourly) != 0 {
+			if l.flag&Ldaily != 0 {
 				go l.rotate(today)
 			}
 		}
