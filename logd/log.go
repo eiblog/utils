@@ -392,20 +392,12 @@ func Fatal(v ...interface{}) {
 	os.Exit(1)
 }
 
-func WaitFlush() {
-	Std.WaitFlush()
-}
-
 func Breakpoint() {
 	Std.Breakpoint()
 }
 
 func SetLevel(lvl int) {
 	Std.SetLevel(lvl)
-}
-
-func SetLogDir(dir string) {
-	Std.SetLogDir(dir)
 }
 
 func SetOutput(w io.Writer) {
