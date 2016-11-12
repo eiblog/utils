@@ -463,15 +463,15 @@ func getColorLevel(level string) string {
 	level = strings.ToUpper(level)
 	switch level {
 	case "DEBUG":
-		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Green, level)
+		return fmt.Sprintf("\033[%dm[%5s]\033[0m", Green, level)
 	case "INFO":
-		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Blue, level)
+		return fmt.Sprintf("\033[%dm[%5s]\033[0m", Blue, level)
 	case "WARN":
-		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Magenta, level)
+		return fmt.Sprintf("\033[%dm[%5s]\033[0m", Magenta, level)
 	case "ERROR":
-		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Yellow, level)
+		return fmt.Sprintf("\033[%dm[%5s]\033[0m", Yellow, level)
 	case "FATAL":
-		return fmt.Sprintf("[\033[%dm%5s\033[0m]", Red, level)
+		return fmt.Sprintf("\033[%dm[%5s]\033[0m", Red, level)
 	default:
 		return level
 	}
