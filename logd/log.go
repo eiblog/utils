@@ -447,7 +447,6 @@ const (
 	Yellow
 	Blue
 	Magenta
-	EndColor = "\033[0m"
 )
 
 // getColorLevel returns colored level string by given level.
