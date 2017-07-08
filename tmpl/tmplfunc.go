@@ -41,14 +41,14 @@ func IsNotZero(t time.Time) bool {
 func Base64Img(domain, avatar string) string {
 	resp, err := http.Get("https://" + domain + "/static/img/" + avatar)
 	if err != nil {
-		log.Error(err)
+		log.Println(err)
 		return ""
 	}
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Println(err)
 		return ""
 	}
 
