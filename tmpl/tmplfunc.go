@@ -16,9 +16,9 @@ var TplFuncMap = make(template.FuncMap)
 func init() {
 	TplFuncMap["dateformat"] = DateFormat
 	TplFuncMap["str2html"] = Str2html
-	TplFuncMap["join"] = StringsJoin
+	TplFuncMap["join"] = Join
 	TplFuncMap["isnotzero"] = IsNotZero
-	TplFuncMap["base64img"] = Base64Img
+	TplFuncMap["getavatar"] = GetAvatar
 }
 
 func Str2html(raw string) template.HTML {
@@ -30,7 +30,7 @@ func DateFormat(t time.Time, layout string) string {
 	return t.Format(layout)
 }
 
-func StringsJoin(a []string, sep string) string {
+func Join(a []string, sep string) string {
 	return strings.Join(a, sep)
 }
 
@@ -38,19 +38,27 @@ func IsNotZero(t time.Time) bool {
 	return !t.IsZero()
 }
 
-func Base64Img(domain, avatar string) string {
-	resp, err := http.Get("https://" + domain + "/static/img/" + avatar)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	defer resp.Body.Close()
+// cache avatar image
+// url: https://<static_domain>/static/img/avatar.jpg
+var avatar string
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return ""
+func GetAvatar(domain string) string {
+	if avatar == "" {
+		resp, err := http.Get("https://" + domain + "/static/img/avatar.jpg")
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+		defer resp.Body.Close()
+
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		avatar = "data:" + resp.Header.Get("content-type") + ";base64," + base64.StdEncoding.EncodeToString(data)
 	}
 
-	return "data:" + resp.Header.Get("content-type") + ";base64," + base64.StdEncoding.EncodeToString(data)
+	return avatar
 }
