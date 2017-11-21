@@ -10,10 +10,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type M bson.M
+
 var (
 	// mongodb session
 	globalMS *mgo.Session
 	mu       sync.RWMutex
+
+	ErrNotFound = mgo.ErrNotFound
 )
 
 const (
@@ -41,6 +45,20 @@ func Connect(dataBase, collection string) (*mgo.Session, *mgo.Collection) {
 	ms := globalMS.Copy()
 	c := ms.DB(dataBase).C(collection)
 	return ms, c
+}
+
+func Index(db, collection string, keys []string) error {
+	ms, c := Connect(db, collection)
+	defer ms.Close()
+
+	index := mgo.Index{
+		Key:        keys,
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	return c.EnsureIndex(index)
 }
 
 func KeyIsExsit(db, collection, key, value string) bool {
