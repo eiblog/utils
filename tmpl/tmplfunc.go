@@ -3,11 +3,12 @@ package tmpl
 
 import (
 	"encoding/base64"
-	"html/template"
+	htmpl "html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -21,8 +22,8 @@ func init() {
 	TplFuncMap["getavatar"] = GetAvatar
 }
 
-func Str2html(raw string) template.HTML {
-	return template.HTML(raw)
+func Str2html(raw string) htmpl.HTML {
+	return htmpl.HTML(raw)
 }
 
 // DateFormat takes a time and a layout string and returns a string with the formatted date. Used by the template parser as "dateformat"
