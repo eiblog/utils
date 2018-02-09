@@ -1,7 +1,6 @@
 package mgo
 
 import (
-	"net"
 	"sync"
 	"time"
 
@@ -25,12 +24,6 @@ const (
 )
 
 func init() {
-	ips, err := net.LookupIP("mongodb")
-	if err != nil {
-		logd.Fatal(err)
-	}
-	logd.Debug(ips)
-
 	sess, err := mgo.Dial("mongodb:27017")
 	if err != nil {
 		logd.Error(err)
