@@ -45,7 +45,7 @@ var avatar string
 
 func GetAvatar(domain string) string {
 	if avatar == "" {
-		resp, err := http.Get("https://" + domain + "/static/img/avatar.jpg")
+		resp, err := http.Get("https://" + domain + "/static/img/avatar.png")
 		if err != nil {
 			log.Println(err)
 			return ""
