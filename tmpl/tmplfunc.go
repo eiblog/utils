@@ -40,7 +40,7 @@ func IsNotZero(t time.Time) bool {
 }
 
 // cache avatar image
-// url: https://<static_domain>/static/img/avatar.jpg
+// url: https://<static_domain>/static/img/avatar.png
 var avatar string
 
 func GetAvatar(domain string) string {
