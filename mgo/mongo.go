@@ -1,6 +1,7 @@
 package mgo
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -20,16 +21,21 @@ var (
 )
 
 const (
-	DEFAULY_MGO_TIMEOUT = 15
+	DEFAULT_MGO_TIMEOUT = 15
+	DEFAULT_MGO_ADDR    = "mongodb:27017"
 )
 
 func init() {
-	sess, err := mgo.Dial("mongodb:27017")
+	mgoAddr := DEFAULT_MGO_ADDR
+	if addr := os.Getenv("EIBLOG_MGO_ADDR"); addr != "" {
+		mgoAddr = addr
+	}
+	sess, err := mgo.Dial(mgoAddr)
 	if err != nil {
 		logd.Error(err)
 	}
 	sess.SetMode(mgo.Strong, true)
-	sess.SetSocketTimeout(DEFAULY_MGO_TIMEOUT * time.Second)
+	sess.SetSocketTimeout(DEFAULT_MGO_TIMEOUT * time.Second)
 	sess.SetCursorTimeout(0)
 	globalMS = sess
 }
